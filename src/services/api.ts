@@ -38,12 +38,9 @@ export const submitSurveyData = async (payload: SurveyPayload) => {
       .insert(responsesToInsert);
 
     if (responsesError) throw responsesError;
-
-    console.log("✅ Data successfully saved to Supabase!");
     return { status: 200, message: "Success" };
 
   } catch (error) {
-    console.error("❌ Error saving data to Supabase:", error);
     return { status: 500, message: "Error" };
   }
 };

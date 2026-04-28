@@ -30,9 +30,9 @@ export default function App() {
   }, [currentPage, participantName, responses]);
 
   return (
-    // Background beige dan card container putih
-    <div className="min-h-screen bg-[#fdf8f0] flex items-center justify-center p-4 font-sans text-slate-800">
-      <div className="bg-white w-full max-w-4xl min-h-[600px] rounded-xl shadow-sm p-8 md:p-12">
+    <div className="min-h-screen bg-[#fdf8f0] flex items-center justify-center md:p-6 font-sans text-slate-800">
+      {/* Container utama: Full screen di HP, Card di Laptop */}
+      <div className="bg-white w-full max-w-4xl min-h-screen md:min-h-[600px] md:rounded-2xl shadow-none md:shadow-xl p-6 sm:p-8 md:p-12 flex flex-col">
         {currentPage === 1 && <WelcomeScreen onNext={() => setCurrentPage(2)} setName={setParticipantName} />}
         {currentPage >= 2 && currentPage <= 11 && (
           <EmailQuestion key={currentPage} pageNumber={currentPage} onAnswer={handleAnswer} />
