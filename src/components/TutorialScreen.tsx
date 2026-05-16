@@ -45,7 +45,7 @@ export default function TutorialScreen({ onFinish }: TutorialProps) {
           {step === 2 && "🔎 This is the email content. Read the context carefully to understand the message."}
           {step === 3 && (
             <span>
-              ✨ <strong>AI Assistant:</strong> Words highlighted in <span className="text-green-600 font-semibold">Green</span> indicate safe patterns, while <span className="text-red-600 font-semibold">Red</span> indicates phishing.<br/><br/>
+              ✨ Words highlighted in <span className="text-green-600 font-semibold">Green</span> indicate safe patterns, while <span className="text-red-600 font-semibold">Red</span> indicates phishing.<br/><br/>
               <em>Tip: Darker colors mean stronger AI confidence. Try hovering over the highlighted words!</em>
             </span>
           )}
