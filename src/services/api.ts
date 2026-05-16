@@ -1,46 +1,53 @@
-import { supabase } from '../supabaseClient';
+import { supabase } from '../supabaseClient'; // Sesuaikan dengan lokasi file client Supabase-mu
 
-export interface SurveyPayload {
-  participant_name: string;
-  responses: {
-    email_id: number;
-    is_phishing: boolean;
-    response_time_ms: number;
-  }[];
+interface ResponseData {
+  email_id: number;
+  is_phishing: boolean;
+  response_time_ms: number;
 }
 
-export const submitSurveyData = async (payload: SurveyPayload) => {
-  console.log("Preparing to send data to Supabase...");
-  
+// Update Interface agar menerima group_type
+interface SurveyData {
+  participant_name: string;
+  group_type: 'control' | 'lime' | 'word2vec';
+  responses: ResponseData[];
+}
+
+export async function submitSurveyData({ participant_name, group_type, responses }: SurveyData) {
   try {
-    // 1. Masukkan nama ke tabel 'participants' dan ambil 'id'-nya
     const { data: participantData, error: participantError } = await supabase
-      .from('participants')
-      .insert([{ name: payload.participant_name }])
-      .select('id')
+      .from('participants') // Ganti dengan nama tabel utama kamu
+      .insert([
+        { 
+          name: participant_name, 
+          group_type: group_type // Kolom baru yang baru saja kita buat di Supabase
+        }
+      ])
+      .select()
       .single();
 
     if (participantError) throw participantError;
 
-    const participantId = participantData.id;
+    // 2. Masukkan semua respon jawaban ke tabel detail (jika struktur tabelmu dipisah)
+    if (participantData && responses.length > 0) {
+      const responsesToInsert = responses.map((res) => ({
+        participant_id: participantData.id, // Foreign key menghubungkan ke tabel utama
+        email_id: res.email_id,
+        is_phishing: res.is_phishing,
+        response_time_ms: res.response_time_ms
+      }));
 
-    // 2. Siapkan data jawaban yang sudah ditambahkan participant_id
-    const responsesToInsert = payload.responses.map((response) => ({
-      participant_id: participantId,
-      email_id: response.email_id,
-      is_phishing: response.is_phishing,
-      response_time_ms: response.response_time_ms
-    }));
+      const { error: responseError } = await supabase
+        .from('responses') // Ganti dengan nama tabel detail respon kamu
+        .insert(responsesToInsert);
 
-    // 3. Masukkan semua jawaban ke tabel 'responses' sekaligus (Bulk Insert)
-    const { error: responsesError } = await supabase
-      .from('responses')
-      .insert(responsesToInsert);
+      if (responseError) throw responseError;
+    }
 
-    if (responsesError) throw responsesError;
-    return { status: 200, message: "Success" };
-
+    console.log("Survey data successfully saved to Supabase!");
+    return { success: true };
   } catch (error) {
-    return { status: 500, message: "Error" };
+    console.error("Failed to submit survey data:", error);
+    return { success: false, error };
   }
-};
+}
