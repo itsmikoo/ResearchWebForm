@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import WelcomeScreen from './components/WelcomeScreen';
+import TutorialScreen from './components/TutorialScreen';
+import ReadyScreen from './components/ReadyScreen';
 import EmailQuestion from './components/EmailQuestion';
 import ThankYouScreen from './components/ThankYouScreen';
 import { submitSurveyData } from './services/api';
@@ -10,34 +12,66 @@ interface ResponseData {
   response_time_ms: number;
 }
 
+type AppState = 'welcome' | 'tutorial' | 'ready' | 'survey' | 'done';
+
 export default function App() {
-  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [appState, setAppState] = useState<AppState>('welcome');
+  const [currentQuestion, setCurrentQuestion] = useState<number>(1);
   const [participantName, setParticipantName] = useState<string>("");
   const [responses, setResponses] = useState<ResponseData[]>([]);
 
   const handleAnswer = (isPhishing: boolean, responseTime: number) => {
     setResponses((prev) => [
       ...prev,
-      { email_id: currentPage - 1, is_phishing: isPhishing, response_time_ms: responseTime }
+      { email_id: currentQuestion, is_phishing: isPhishing, response_time_ms: responseTime }
     ]);
-    setCurrentPage((prev) => prev + 1);
+    
+    if (currentQuestion < 10) {
+      setCurrentQuestion((prev) => prev + 1);
+    } else {
+      setAppState('done');
+    }
   };
 
   useEffect(() => {
-    if (currentPage === 12) {
+    if (appState === 'done') {
       submitSurveyData({ participant_name: participantName, responses });
     }
-  }, [currentPage, participantName, responses]);
+  }, [appState, participantName, responses]);
 
   return (
     <div className="min-h-screen bg-[#fdf8f0] flex items-center justify-center md:p-6 font-sans text-slate-800">
-      {/* Container utama: Full screen di HP, Card di Laptop */}
-      <div className="bg-white w-full max-w-4xl min-h-screen md:min-h-[600px] md:rounded-2xl shadow-none md:shadow-xl p-6 sm:p-8 md:p-12 flex flex-col">
-        {currentPage === 1 && <WelcomeScreen onNext={() => setCurrentPage(2)} setName={setParticipantName} />}
-        {currentPage >= 2 && currentPage <= 11 && (
-          <EmailQuestion key={currentPage} pageNumber={currentPage} onAnswer={handleAnswer} />
+      <div className="bg-white w-full max-w-4xl min-h-screen md:min-h-[600px] md:rounded-2xl shadow-none md:shadow-xl p-6 sm:p-8 md:p-12 flex flex-col relative overflow-hidden">
+        
+        {appState === 'welcome' && (
+          <WelcomeScreen 
+            onNext={() => setAppState('tutorial')} 
+            setName={setParticipantName} 
+          />
         )}
-        {currentPage === 12 && <ThankYouScreen />}
+
+        {appState === 'tutorial' && (
+          <TutorialScreen 
+            onFinish={() => setAppState('ready')} 
+          />
+        )}
+
+        {appState === 'ready' && (
+          <ReadyScreen 
+            onStart={() => setAppState('survey')} 
+          />
+        )}
+
+        {appState === 'survey' && (
+          <EmailQuestion 
+            key={currentQuestion} 
+            pageNumber={currentQuestion} 
+            onAnswer={handleAnswer} 
+          />
+        )}
+
+        {appState === 'done' && <ThankYouScreen />}
+        
       </div>
     </div>
   );

@@ -9,11 +9,16 @@ export default function EmailQuestion({ pageNumber, onAnswer }: EmailProps) {
   const timeMs = useTimer();
   const displayTime = (timeMs / 1000).toFixed(1);
   
-  const currentQuestionIndex = pageNumber - 1;
-  const completedQuestions = currentQuestionIndex - 1; 
+  // PERBAIKAN DI SINI:
+  // Angka tampilan langsung pakai pageNumber (1 sampai 10)
+  const displayQuestionNumber = pageNumber; 
+  // Progress bar yang terisi adalah soal yang sudah lewat
+  const completedQuestions = pageNumber - 1; 
   const totalQuestions = 10;
   
-  const dummyEmail = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.";
+  // Nanti arrayIndex (completedQuestions) ini yang dipakai buat panggil emailData[completedQuestions]
+  
+  const dummyEmail = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.";
 
   return (
     <div className="w-full max-w-3xl mx-auto flex flex-col flex-1">
@@ -29,7 +34,8 @@ export default function EmailQuestion({ pageNumber, onAnswer }: EmailProps) {
 
       <div className="text-center mb-6 sm:mb-8">
         <p className="text-amber-500 font-bold text-[10px] sm:text-xs tracking-widest uppercase mb-2 sm:mb-3">
-          Question {currentQuestionIndex} / {totalQuestions}
+          {/* PERBAIKAN DI SINI: Memanggil displayQuestionNumber */}
+          Question {displayQuestionNumber} / {totalQuestions}
         </p>
         <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-900 mb-1 sm:mb-2 leading-tight">
           Is this email dangerous?
