@@ -1,41 +1,32 @@
 import { useTimer } from '../hooks/useTimer';
+import LimeEmailViewer from './LimeEmailViewer';
+import { emailData } from '../data/emails';
+import type { GroupType } from '../App';
 
 interface EmailProps {
   pageNumber: number;
+  group: GroupType;
   onAnswer: (isPhishing: boolean, responseTime: number) => void;
 }
 
-export default function EmailQuestion({ pageNumber, onAnswer }: EmailProps) {
+export default function EmailQuestion({ pageNumber, group, onAnswer }: EmailProps) {
   const timeMs = useTimer();
   const displayTime = (timeMs / 1000).toFixed(1);
-  
-  // PERBAIKAN DI SINI:
-  // Angka tampilan langsung pakai pageNumber (1 sampai 10)
-  const displayQuestionNumber = pageNumber; 
-  // Progress bar yang terisi adalah soal yang sudah lewat
   const completedQuestions = pageNumber - 1; 
-  const totalQuestions = 10;
-  
-  // Nanti arrayIndex (completedQuestions) ini yang dipakai buat panggil emailData[completedQuestions]
-  
-  const dummyEmail = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.";
+  const currentEmail = emailData[completedQuestions];
 
   return (
     <div className="w-full max-w-3xl mx-auto flex flex-col flex-1">
-      {/* Top Progress Bar */}
+      {/* (Bagian Header / Progress Bar Tetap Sama) */}
       <div className="flex gap-1 sm:gap-2 mb-6 sm:mb-10">
-        {[...Array(totalQuestions)].map((_, i) => (
-          <div 
-            key={i} 
-            className={`h-1.5 flex-1 rounded-full ${i < completedQuestions ? 'bg-amber-400' : 'bg-gray-100'}`}
-          ></div>
+        {[...Array(10)].map((_, i) => (
+          <div key={i} className={`h-1.5 flex-1 rounded-full ${i < completedQuestions ? 'bg-amber-400' : 'bg-gray-100'}`}></div>
         ))}
       </div>
 
       <div className="text-center mb-6 sm:mb-8">
         <p className="text-amber-500 font-bold text-[10px] sm:text-xs tracking-widest uppercase mb-2 sm:mb-3">
-          {/* PERBAIKAN DI SINI: Memanggil displayQuestionNumber */}
-          Question {displayQuestionNumber} / {totalQuestions}
+          Question {pageNumber} / 10
         </p>
         <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-900 mb-1 sm:mb-2 leading-tight">
           Is this email dangerous?
@@ -45,24 +36,33 @@ export default function EmailQuestion({ pageNumber, onAnswer }: EmailProps) {
         </p>
       </div>
 
-      {/* Email Text Area */}
-      <div className="bg-gray-50 border border-gray-100 p-4 sm:p-6 rounded-lg mb-8 sm:mb-10 text-slate-600 text-sm sm:text-base leading-relaxed overflow-y-auto max-h-[40vh] sm:max-h-none shadow-inner">
-        <p>{dummyEmail}</p>
+      {/* RENDER BERSYARAT BERDASARKAN GRUP */}
+      <div className="mb-8 sm:mb-10 overflow-y-auto max-h-[50vh] sm:max-h-none rounded-xl">
+        
+        {group === 'control' && (
+          <div className="bg-gray-50 border border-gray-100 p-6 rounded-xl text-slate-800 leading-relaxed font-serif tracking-wide shadow-inner">
+            {currentEmail.text}
+          </div>
+        )}
+
+        {group === 'lime' && (
+          <LimeEmailViewer text={currentEmail.text} highlights={currentEmail.highlights} />
+        )}
+
+        {group === 'word2vec' && (
+          <div className="bg-blue-50 border border-blue-200 p-6 rounded-xl text-blue-900 text-center font-bold">
+            UI Word2Vec akan dirender di sini nanti!
+          </div>
+        )}
+
       </div>
       
-      {/* Action Buttons */}
+      {/* (Bagian Tombol Bawah Tetap Sama) */}
       <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full mt-auto">
-        <button 
-          onClick={() => onAnswer(true, timeMs)} 
-          className="flex-1 py-3 sm:py-4 px-4 sm:px-6 bg-white hover:bg-red-50 text-slate-700 hover:text-red-700 border border-gray-200 hover:border-red-200 rounded-full transition-all font-medium text-center shadow-sm text-sm sm:text-base"
-        >
+        <button onClick={() => onAnswer(true, timeMs)} className="flex-1 py-3 sm:py-4 px-4 sm:px-6 bg-white hover:bg-red-50 text-slate-700 hover:text-red-700 border border-gray-200 hover:border-red-200 rounded-full transition-all font-medium text-center shadow-sm text-sm sm:text-base">
           Yes, it's Phishing
         </button>
-        
-        <button 
-          onClick={() => onAnswer(false, timeMs)} 
-          className="flex-1 py-3 sm:py-4 px-4 sm:px-6 bg-white hover:bg-green-50 text-slate-700 hover:text-green-700 border border-gray-200 hover:border-green-200 rounded-full transition-all font-medium text-center shadow-sm text-sm sm:text-base"
-        >
+        <button onClick={() => onAnswer(false, timeMs)} className="flex-1 py-3 sm:py-4 px-4 sm:px-6 bg-white hover:bg-green-50 text-slate-700 hover:text-green-700 border border-gray-200 hover:border-green-200 rounded-full transition-all font-medium text-center shadow-sm text-sm sm:text-base">
           No, it's Safe
         </button>
       </div>

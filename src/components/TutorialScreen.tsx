@@ -1,25 +1,34 @@
 import { useState } from 'react';
 import LimeEmailViewer from './LimeEmailViewer';
-import { limeExampleData } from '../data/emails';
+import { tutorialEmailData } from '../data/emails';
+import type { GroupType } from '../App';
 
 interface TutorialProps {
+  group: GroupType;
   onFinish: () => void;
 }
 
-export default function TutorialScreen({ onFinish }: TutorialProps) {
+export default function TutorialScreen({ group, onFinish }: TutorialProps) {
   const [step, setStep] = useState(1);
-  const TOTAL_STEPS = 4;
+  
+  // Jika grup Control, tutorial hanya 3 langkah. Selain itu 4 langkah.
+  const TOTAL_STEPS = group === 'control' ? 3 : 4;
 
   const nextStep = () => {
     if (step < TOTAL_STEPS) setStep(step + 1);
     else onFinish();
   };
 
-  const panelPosition = step === 4 
+  // Deteksi apakah sedang berada di step paling akhir (Bagian Tombol)
+  const isButtonStep = step === TOTAL_STEPS;
+  
+  // Posisi panel otomatis pindah ke atas saat mencapai step terakhir
+  const panelPosition = isButtonStep 
     ? "top-0 md:top-4 right-0 md:-right-4" 
     : "bottom-0 md:bottom-4 right-0 md:-right-4"; 
 
-  const isEmailHighlighted = step === 2 || step === 3;
+  // Deteksi kapan area Email harus disorot oleh senter
+  const isEmailHighlighted = step === 2 || (group !== 'control' && step === 3);
 
   return (
     <div className="w-full max-w-3xl mx-auto flex flex-col flex-1 relative">
@@ -27,7 +36,7 @@ export default function TutorialScreen({ onFinish }: TutorialProps) {
       {/* 1. OVERLAY GELAP */}
       <div className="absolute -inset-[500px] bg-slate-900/60 z-40 pointer-events-none transition-opacity duration-300"></div>
 
-      {/* 2. FLOATING TUTORIAL PANEL - Warna diubah ke Amber */}
+      {/* 2. FLOATING TUTORIAL PANEL */}
       <div className={`absolute z-[60] w-full sm:w-[340px] bg-white rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.25)] p-5 border border-amber-100 flex flex-col transition-all duration-500 ease-in-out ${panelPosition}`}>
         <div className="flex justify-between items-center border-b border-gray-100 pb-3 mb-3">
             <h3 className="font-bold text-amber-600 flex items-center gap-2">
@@ -39,32 +48,34 @@ export default function TutorialScreen({ onFinish }: TutorialProps) {
             <span className="text-xs font-semibold text-slate-400">Step {step} of {TOTAL_STEPS}</span>
         </div>
         
-        {/* Penjelasan Full English */}
+        {/* Penjelasan Tutorial */}
         <div className="text-slate-600 text-sm leading-relaxed min-h-[5rem] mb-4">
           {step === 1 && "⏱️ Watch your question progress and the timer. Time runs automatically, but don't panic—go at your own comfortable pace."}
           {step === 2 && "🔎 This is the email content. Read the context carefully to understand the message."}
-          {step === 3 && (
+          
+          {group !== 'control' && step === 3 && (
             <span>
-              ✨ Words highlighted in <span className="text-green-600 font-semibold">Green</span> indicate safe patterns, while <span className="text-red-600 font-semibold">Red</span> indicates phishing.<br/><br/>
+              ✨ <strong>AI Assistant:</strong> Words highlighted in <span className="text-green-600 font-semibold">Green</span> indicate safe patterns, while <span className="text-red-600 font-semibold">Red</span> indicates phishing.<br/><br/>
               <em>Tip: Darker colors mean stronger AI confidence. Try hovering over the highlighted words!</em>
             </span>
           )}
-          {step === 4 && "👆 Once you've made up your mind, click one of these buttons to submit your decision and proceed."}
+          
+          {isButtonStep && "👆 Once you've made up your mind, click one of these buttons to submit your decision and proceed."}
         </div>
         
-        {/* Tombol Panel jadi Amber */}
         <button 
           onClick={nextStep} 
           className="w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-lg transition-colors flex justify-center items-center gap-2 shadow-sm"
         >
-          {step === 4 ? "Start Real Test 🚀" : "Next"}
-          {step < 4 && <span>→</span>}
+          {isButtonStep ? "Start Real Test 🚀" : "Next"}
+          {!isButtonStep && <span>→</span>}
         </button>
       </div>
 
+
       {/* --- MOCK UI --- */}
 
-      {/* Mock UI 1: Progress & Timer - Ring Senter diubah ke Amber */}
+      {/* Mock UI 1: Progress & Timer */}
       <div className={`transition-all duration-300 ${step === 1 ? 'relative z-50 bg-white ring-4 ring-amber-500 shadow-2xl rounded-xl p-4 -mx-4' : 'relative z-30 p-4 -mx-4 mb-2'}`}>
         <div className="flex gap-1 sm:gap-2 mb-6">
           {[...Array(10)].map((_, i) => (
@@ -84,16 +95,23 @@ export default function TutorialScreen({ onFinish }: TutorialProps) {
         </div>
       </div>
 
-      {/* Mock UI 2 & 3: Email Area with LIME - Ring Senter diubah ke Amber */}
+      {/* Mock UI 2 & 3: Email Area */}
       <div className={`transition-all duration-300 mb-8 sm:mb-10 rounded-xl ${isEmailHighlighted ? 'relative z-50 ring-4 ring-amber-500 shadow-2xl' : 'relative z-30 opacity-40'}`}>
-        <LimeEmailViewer 
-          text={limeExampleData.text} 
-          highlights={limeExampleData.highlights} 
-        />
+        {/* Jika Control, tampilkan teks polos. Jika tidak, pakai LIME Viewer */}
+        {group === 'control' ? (
+          <div className="bg-gray-50 border border-gray-100 p-6 rounded-xl text-slate-800 leading-relaxed font-serif tracking-wide shadow-inner">
+            {tutorialEmailData.text}
+          </div>
+        ) : (
+          <LimeEmailViewer 
+            text={tutorialEmailData.text} 
+            highlights={tutorialEmailData.highlights} 
+          />
+        )}
       </div>
       
-      {/* Mock UI 4: Action Buttons - Ring Senter diubah ke Amber */}
-      <div className={`transition-all duration-300 flex flex-col sm:flex-row gap-3 sm:gap-4 w-full mt-auto ${step === 4 ? 'relative z-50 bg-white ring-4 ring-amber-500 shadow-2xl rounded-xl p-4 -mx-4' : 'relative z-30 p-4 -mx-4 opacity-40'}`}>
+      {/* Mock UI 4: Action Buttons */}
+      <div className={`transition-all duration-300 flex flex-col sm:flex-row gap-3 sm:gap-4 w-full mt-auto ${isButtonStep ? 'relative z-50 bg-white ring-4 ring-amber-500 shadow-2xl rounded-xl p-4 -mx-4' : 'relative z-30 p-4 -mx-4 opacity-40'}`}>
         <div className="flex-1 py-3 sm:py-4 px-4 bg-gray-50 border border-gray-200 rounded-full font-medium text-center text-slate-400">
           Yes, it's Phishing
         </div>
