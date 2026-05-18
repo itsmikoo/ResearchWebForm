@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import LimeEmailViewer from './LimeEmailViewer';
-import { tutorialEmailData } from '../data/emails';
+import IGEmailViewer from './IGEmailViewer';
+import { tutorialEmailData } from '../data/emails'; 
+import { tutorialW2VData } from '../data/word2vecEmails';
 import type { GroupType } from '../App';
 
 interface TutorialProps {
@@ -11,7 +13,7 @@ interface TutorialProps {
 export default function TutorialScreen({ group, onFinish }: TutorialProps) {
   const [step, setStep] = useState(1);
   
-  // Jika grup Control, tutorial hanya 3 langkah. Selain itu 4 langkah.
+  // Jika grup Control, tutorial hanya 3 langkah. AI 4 langkah.
   const TOTAL_STEPS = group === 'control' ? 3 : 4;
 
   const nextStep = () => {
@@ -22,18 +24,19 @@ export default function TutorialScreen({ group, onFinish }: TutorialProps) {
   // Deteksi apakah sedang berada di step paling akhir (Bagian Tombol)
   const isButtonStep = step === TOTAL_STEPS;
   
-  // Posisi panel otomatis pindah ke atas saat mencapai step terakhir
+  // Posisi panel otomatis pindah ke atas saat mencapai step terakhir agar tidak menutupi tombol
   const panelPosition = isButtonStep 
     ? "top-0 md:top-4 right-0 md:-right-4" 
     : "bottom-0 md:bottom-4 right-0 md:-right-4"; 
 
-  // Deteksi kapan area Email harus disorot oleh senter
+  // Deteksi kapan area Email harus disorot oleh senter/flashlight
+  // Control: step 2. AI: step 2 dan 3.
   const isEmailHighlighted = step === 2 || (group !== 'control' && step === 3);
 
   return (
     <div className="w-full max-w-3xl mx-auto flex flex-col flex-1 relative">
       
-      {/* 1. OVERLAY GELAP */}
+      {/* 1. OVERLAY GELAP (FLASHLIGHT EFFECT) */}
       <div className="absolute -inset-[500px] bg-slate-900/60 z-40 pointer-events-none transition-opacity duration-300"></div>
 
       {/* 2. FLOATING TUTORIAL PANEL */}
@@ -48,10 +51,11 @@ export default function TutorialScreen({ group, onFinish }: TutorialProps) {
             <span className="text-xs font-semibold text-slate-400">Step {step} of {TOTAL_STEPS}</span>
         </div>
         
-        {/* Penjelasan Tutorial */}
+        {/* Deskripsi Instruksi */}
         <div className="text-slate-600 text-sm leading-relaxed min-h-[5rem] mb-4">
           {step === 1 && "⏱️ Watch your question progress and the timer. Time runs automatically, but don't panic—go at your own comfortable pace."}
-          {step === 2 && "🔎 This is the email content. Read the context carefully to understand the message."}
+          
+          {step === 2 && "🔎 This is the email content area. Read the context and details carefully to understand the message."}
           
           {group !== 'control' && step === 3 && (
             <span>
@@ -60,7 +64,7 @@ export default function TutorialScreen({ group, onFinish }: TutorialProps) {
             </span>
           )}
           
-          {isButtonStep && "👆 Once you've made up your mind, click one of these buttons to submit your decision and proceed."}
+          {isButtonStep && "👆 Once you've made up your mind, click one of these buttons to submit your decision and proceed to the next email."}
         </div>
         
         <button 
@@ -73,9 +77,9 @@ export default function TutorialScreen({ group, onFinish }: TutorialProps) {
       </div>
 
 
-      {/* --- MOCK UI --- */}
+      {/* --- MOCK UI (AREA YANG DISOROT) --- */}
 
-      {/* Mock UI 1: Progress & Timer */}
+      {/* Mock UI 1: Progress & Timer (Disorot di Step 1) */}
       <div className={`transition-all duration-300 ${step === 1 ? 'relative z-50 bg-white ring-4 ring-amber-500 shadow-2xl rounded-xl p-4 -mx-4' : 'relative z-30 p-4 -mx-4 mb-2'}`}>
         <div className="flex gap-1 sm:gap-2 mb-6">
           {[...Array(10)].map((_, i) => (
@@ -95,22 +99,33 @@ export default function TutorialScreen({ group, onFinish }: TutorialProps) {
         </div>
       </div>
 
-      {/* Mock UI 2 & 3: Email Area */}
+      {/* Mock UI 2 & 3: Email Area (Disorot di Step 2/3) */}
       <div className={`transition-all duration-300 mb-8 sm:mb-10 rounded-xl ${isEmailHighlighted ? 'relative z-50 ring-4 ring-amber-500 shadow-2xl' : 'relative z-30 opacity-40'}`}>
-        {/* Jika Control, tampilkan teks polos. Jika tidak, pakai LIME Viewer */}
-        {group === 'control' ? (
-          <div className="bg-gray-50 border border-gray-100 p-6 rounded-xl text-slate-800 leading-relaxed font-serif tracking-wide shadow-inner">
+        
+        {/* Render sesuai Grup */}
+        {group === 'control' && (
+          <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm text-slate-800 leading-relaxed text-base md:text-lg">
             {tutorialEmailData.text}
           </div>
-        ) : (
+        )}
+        
+        {group === 'lime' && (
           <LimeEmailViewer 
             text={tutorialEmailData.text} 
             highlights={tutorialEmailData.highlights} 
           />
         )}
+
+        {group === 'word2vec' && (
+          <IGEmailViewer 
+            tokens={tutorialW2VData.tokens} 
+            explainingTowards={tutorialW2VData.explainingTowards} 
+          />
+        )}
+        
       </div>
       
-      {/* Mock UI 4: Action Buttons */}
+      {/* Mock UI 4: Action Buttons (Disorot di Step Terakhir) */}
       <div className={`transition-all duration-300 flex flex-col sm:flex-row gap-3 sm:gap-4 w-full mt-auto ${isButtonStep ? 'relative z-50 bg-white ring-4 ring-amber-500 shadow-2xl rounded-xl p-4 -mx-4' : 'relative z-30 p-4 -mx-4 opacity-40'}`}>
         <div className="flex-1 py-3 sm:py-4 px-4 bg-gray-50 border border-gray-200 rounded-full font-medium text-center text-slate-400">
           Yes, it's Phishing
