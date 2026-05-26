@@ -1,3 +1,5 @@
+import React from 'react';
+
 export interface Highlight {
   word: string;
   weight: number;
@@ -39,38 +41,53 @@ export default function LimeEmailViewer({ text, highlights }: LimeEmailViewerPro
         {words.map((word, index) => {
           const cleanWord = word.toLowerCase().replace(/[^a-z0-9]/g, '');
           const highlightData = highlightMap[cleanWord];
+          
+          // Deteksi tanda baca akhir (bisa berupa token "." berdiri sendiri, atau nempel di kata "word.")
+          const isEndOfSentence = word.endsWith('.') || word.endsWith('!') || word.endsWith('?');
 
-          if (highlightData) {
-            // 2. Hitung Rasio (0.0 sampai 1.0)
-            const ratio = Math.abs(highlightData.weight) / maxWeight;
-            
-            // 3. Konversi Rasio ke Opacity (Mulai dari 0.20 sampai maksimal 0.80)
-            // Rumus: Base 0.2 + (Ratio * Sisa Range 0.6)
-            const softAlpha = 0.20 + (ratio * 0.60); 
+          return (
+            <React.Fragment key={index}>
+              {/* RENDER KATA (HIGHLIGHT ATAU POLOS) */}
+              {highlightData ? (
+                // 1. Jika kata memiliki bobot AI (Highlight)
+                (() => {
+                  const ratio = Math.abs(highlightData.weight) / maxWeight;
+                  const softAlpha = 0.20 + (ratio * 0.60); 
+                  const bgColor = highlightData.type === 'legitimate' 
+                    ? `rgba(34, 197, 94, ${softAlpha})` 
+                    : `rgba(239, 68, 68, ${softAlpha})`;
+                  
+                  return (
+                    <span 
+                      className="px-0.5 mx-[1px] rounded transition-all cursor-help group relative inline-block hover:brightness-95"
+                      style={{ backgroundColor: bgColor }}
+                    >
+                      {word}
+                      
+                      {/* Tooltip untuk melihat skor aslinya saat di-hover */}
+                      <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block bg-slate-900 text-white text-xs py-1 px-2 rounded whitespace-nowrap z-10 shadow-lg font-sans">
+                        LIME Weight: {highlightData.weight.toFixed(4)}
+                      </span>
+                    </span>
+                  );
+                })()
+              ) : (
+                // 2. Jika kata biasa tanpa bobot AI
+                <span>{word}</span>
+              )}
 
-            // 4. Masukkan alpha ke RGBA
-            const bgColor = highlightData.type === 'legitimate' 
-              ? `rgba(34, 197, 94, ${softAlpha})` 
-              : `rgba(239, 68, 68, ${softAlpha})`;
-            
-            return (
-              <span 
-                key={index} 
-                className="px-0.5 mx-[1px] rounded transition-all cursor-help group relative inline-block hover:brightness-95"
-                style={{ backgroundColor: bgColor }}
-              >
-                {word}
-                
-                {/* Tooltip untuk melihat skor aslinya saat di-hover */}
-                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block bg-slate-900 text-white text-xs py-1 px-2 rounded whitespace-nowrap z-10 shadow-lg font-sans">
-                  LIME Weight: {highlightData.weight.toFixed(4)}
-                </span>
-              </span>
-            );
-          }
+              {/* SPASI ANTAR KATA */}
+              {' '}
 
-          // Render kata biasa jika tidak ada di list
-          return <span key={index}> {word} </span>;
+              {/* INJEKSI ENTER / PARAGRAF BARU */}
+              {isEndOfSentence && (
+                <>
+                  <br />
+                  <br />
+                </>
+              )}
+            </React.Fragment>
+          );
         })}
       </div>
     </div>
