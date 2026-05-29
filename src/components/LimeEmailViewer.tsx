@@ -1,9 +1,9 @@
-import React from 'react';
+import React from "react";
 
 export interface Highlight {
   word: string;
   weight: number;
-  type: 'legitimate' | 'phishing';
+  type: "legitimate" | "phishing";
 }
 
 interface LimeEmailViewerProps {
@@ -11,84 +11,86 @@ interface LimeEmailViewerProps {
   highlights: Highlight[];
 }
 
-export default function LimeEmailViewer({ text, highlights }: LimeEmailViewerProps) {
-  const highlightMap = highlights.reduce((acc, curr) => {
-    acc[curr.word.toLowerCase()] = curr;
-    return acc;
-  }, {} as Record<string, Highlight>);
+export default function LimeEmailViewer({
+  text,
+  highlights,
+}: LimeEmailViewerProps) {
+  const highlightMap = highlights.reduce(
+    (acc, curr) => {
+      acc[curr.word.toLowerCase()] = curr;
+      return acc;
+    },
+    {} as Record<string, Highlight>,
+  );
 
-  const maxWeight = Math.max(...highlights.map(h => Math.abs(h.weight)));
+  const maxWeight = Math.max(...highlights.map((h) => Math.abs(h.weight)));
 
-  const words = text.split(' ');
+  // 1. Split the text by newlines to preserve manual formatting
+  const paragraphs = text.split("\n");
 
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-      {/* Legend / Keterangan Warna */}
+      {/* Legend */}
       <div className="flex gap-6 mb-6 pb-4 border-b border-gray-100 text-sm font-medium">
         <div className="flex items-center gap-2">
-          {/* Legend di-set di 60% sebagai jalan tengah */}
-          <span className="w-4 h-4 rounded" style={{ backgroundColor: 'rgba(34, 197, 94, 0.6)' }}></span>
+          <span
+            className="w-4 h-4 rounded"
+            style={{ backgroundColor: "rgba(34, 197, 94, 0.6)" }}
+          ></span>
           <span className="text-slate-600">Safe Email (Green)</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="w-4 h-4 rounded" style={{ backgroundColor: 'rgba(239, 68, 68, 0.6)' }}></span>
+          <span
+            className="w-4 h-4 rounded"
+            style={{ backgroundColor: "rgba(239, 68, 68, 0.6)" }}
+          ></span>
           <span className="text-slate-600">Phishing Email (Red)</span>
         </div>
       </div>
 
-      {/* Render Teks Email dengan Highlight Dinamis */}
+      {/* Render Email Text */}
       <div className="text-slate-800 leading-relaxed text-base md:text-lg">
-        {words.map((word, index) => {
-          const cleanWord = word.toLowerCase().replace(/[^a-z0-9]/g, '');
-          const highlightData = highlightMap[cleanWord];
-          
-          // Deteksi tanda baca akhir (bisa berupa token "." berdiri sendiri, atau nempel di kata "word.")
-          const isEndOfSentence = word.endsWith('.') || word.endsWith('!') || word.endsWith('?');
+        {paragraphs.map((paragraph, pIndex) => (
+          // 2. Wrap each line in a div. min-h ensures empty lines (\n\n) render as blank spaces.
+          <div key={pIndex} className="min-h-[1.5rem] mb-1">
+            {paragraph.split(" ").map((word, wIndex) => {
+              // Skip empty strings caused by multiple spaces
+              if (!word) return null;
 
-          return (
-            <React.Fragment key={index}>
-              {/* RENDER KATA (HIGHLIGHT ATAU POLOS) */}
-              {highlightData ? (
-                // 1. Jika kata memiliki bobot AI (Highlight)
-                (() => {
-                  const ratio = Math.abs(highlightData.weight) / maxWeight;
-                  const softAlpha = 0.20 + (ratio * 0.60); 
-                  const bgColor = highlightData.type === 'legitimate' 
-                    ? `rgba(34, 197, 94, ${softAlpha})` 
-                    : `rgba(239, 68, 68, ${softAlpha})`;
-                  
-                  return (
-                    <span 
-                      className="px-0.5 mx-[1px] rounded transition-all cursor-help group relative inline-block hover:brightness-95"
-                      style={{ backgroundColor: bgColor }}
-                    >
-                      {word}
-                      
-                      {/* Tooltip untuk melihat skor aslinya saat di-hover */}
-                      <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block bg-slate-900 text-white text-xs py-1 px-2 rounded whitespace-nowrap z-10 shadow-lg font-sans">
-                        LIME Weight: {highlightData.weight.toFixed(4)}
-                      </span>
-                    </span>
-                  );
-                })()
-              ) : (
-                // 2. Jika kata biasa tanpa bobot AI
-                <span>{word}</span>
-              )}
+              const cleanWord = word.toLowerCase().replace(/[^a-z0-9]/g, "");
+              const highlightData = highlightMap[cleanWord];
 
-              {/* SPASI ANTAR KATA */}
-              {' '}
+              return (
+                <React.Fragment key={wIndex}>
+                  {highlightData ? (
+                    (() => {
+                      const ratio = Math.abs(highlightData.weight) / maxWeight;
+                      const softAlpha = 0.2 + ratio * 0.6;
+                      const bgColor =
+                        highlightData.type === "legitimate"
+                          ? `rgba(34, 197, 94, ${softAlpha})`
+                          : `rgba(239, 68, 68, ${softAlpha})`;
 
-              {/* INJEKSI ENTER / PARAGRAF BARU */}
-              {isEndOfSentence && (
-                <>
-                  <br />
-                  <br />
-                </>
-              )}
-            </React.Fragment>
-          );
-        })}
+                      return (
+                        <span
+                          className="px-0.5 mx-[1px] rounded transition-all cursor-help group relative inline-block hover:brightness-95"
+                          style={{ backgroundColor: bgColor }}
+                        >
+                          {word}
+                          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block bg-slate-900 text-white text-xs py-1 px-2 rounded whitespace-nowrap z-10 shadow-lg font-sans">
+                            LIME Weight: {highlightData.weight.toFixed(4)}
+                          </span>
+                        </span>
+                      );
+                    })()
+                  ) : (
+                    <span>{word}</span>
+                  )}{" "}
+                </React.Fragment>
+              );
+            })}
+          </div>
+        ))}
       </div>
     </div>
   );
